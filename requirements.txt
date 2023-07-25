@@ -23,7 +23,7 @@ Jinja2==2.11.2
 jmespath==0.10.0
 lxml==4.6.2
 MarkupSafe==1.1.1
-mysql==0.0.2
+mysql==0.0.3
 mysqlclient==2.0.3
 parsel==1.6.0
 Protego==0.1.16

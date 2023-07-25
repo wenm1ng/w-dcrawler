@@ -35,6 +35,7 @@ from App.common.MysqlPool import MysqlPool
 import random
 from App.common import Config
 from App.common.Exception import msgException
+import sys
 
 '''
  # 66ip
@@ -162,6 +163,7 @@ class ccWaCrawlService(object):
             header['TARGETURL'] = url
             header['User-Agent'] = userAgent().getPc()
             rs = re.match(r'.*?expansion:(.*?) type.*?tag:(.*?)&.*?', url)
+            print(rs)
             if not rs.group(1) or not rs.group(2):
                 raise Exception('采集链接错误')
             version = rs.group(1) #版本信息
@@ -209,7 +211,7 @@ class ccWaCrawlService(object):
                 time.sleep(max(0.3, round(random.random(), 2)))
                 for val in resArr['hits']:
                     # 爬取wa详情页面信息
-                    header['TARGETURL'] = 'https://data6.wago.io/lookup/wago?id='+val['id']
+                    header['TARGETURL'] = 'https://data.wago.io/lookup/wago?id='+val['id']
                     header['User-Agent'] = userAgent().getPc()
 
                     result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,
@@ -233,7 +235,7 @@ class ccWaCrawlService(object):
                         'origin_description': resArr['description']['text']
                     }
                     # 爬取wa字符串信息
-                    header['TARGETURL'] = 'https://data5.wago.io'+resArr['codeURL']
+                    header['TARGETURL'] = 'https://data.wago.io'+resArr['codeURL']
                     header['User-Agent'] = userAgent().getPc()
                     result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,
                                                 timeout=5)
@@ -241,7 +243,7 @@ class ccWaCrawlService(object):
                     insertData['wa_content'] = resInfoArr['encoded']
                     waData = [insertData]
                     field = ['version', 'occupation', 'talent_name', 'type', 'data_from', 'tt_id', 'origin_url', 'origin_title', 'origin_description', 'wa_content']
-                    waId = MysqlPool().batch_insert('wow_wa_content', field, waData)
+                    waId = MysqlPool().batch_insert('wow_wa_content_python', field, waData)
                     print(insertData)
 
                     imageData = []
@@ -257,9 +259,10 @@ class ccWaCrawlService(object):
 
                     if imageData:
                         field = ['origin_image_url', 'wa_id']
-                        MysqlPool().batch_insert('wow_wa_image', field, imageData)
+                        MysqlPool().batch_insert('wow_wa_image_python', field, imageData)
                     time.sleep(max(0.3, round(random.random(), 2)))
                     print('成功采集id:'+val['id'])
+                    sys.exit()
                 # startPos = resStr.find("'{")
                 # endPos = resStr.find("'}")
                 # jsonStr = resStr[startPos:endPos]

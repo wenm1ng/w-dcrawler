@@ -110,10 +110,9 @@ class WebRequest(object):
         # print(url)
         # print(header)
 
-        proxies = {
-            'http': 'http://120.77.46.4:6666',
-            'https': 'http://120.77.46.4:6666'
-        }
+        # proxies = {
+        #     'http': 'http://127.0.0.1:33210',
+        # }
         url = header['TARGETURL']
 
         if 'amazon' in url:
@@ -126,6 +125,7 @@ class WebRequest(object):
                 # no pyopenssl support used / needed / available
                 pass
         try:
+            print(222222222)
             self.response = requests.get(url, headers=header, proxies=proxies, timeout=timeout, *args, **kwargs)
             return self
         except Exception as e:

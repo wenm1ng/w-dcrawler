@@ -122,10 +122,9 @@ class MysqlPool(object):
             alias = 'new'
             fields_str = ','.join(fields)
             replace_str = ','.join(['%s' for _ in range(len(fields))])
-            fields_update_str = ','.join(['{first}={alias}.{second}'.format(first=field, alias=alias, second=field) for field in fields])
+            fields_update_str = ','.join(['{first}=values({second})'.format(first=field, second=field) for field in fields])
             sql = '''
-            insert ignore into {table} ( {fields} ) values ({replace_str}) as {alias}
-            on duplicate key update {fields_update}
+            insert ignore into {table} ( {fields} ) values ({replace_str}) on duplicate key update {fields_update}
             '''.format(table=table, replace_str=replace_str, fields=fields_str, fields_update=fields_update_str, alias=alias)
             print(sql)
 
