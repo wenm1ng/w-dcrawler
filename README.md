@@ -42,3 +42,7 @@ python run.py
 安装不了扩展时候，临时用
 
 pip install 扩展名称 -i http://mirrors.aliyun.com/pypi/simple --trusted-host mirrors.aliyun.com
+
+cd demjson-2.2.4 &&  python setup.py install
+
+pip install mysqlclient-1.4.6-cp37-cp37m-win32.whl

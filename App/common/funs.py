@@ -7,6 +7,7 @@
 """
 
 import random
+import urllib
 
 def checkValueType(value):
     type = None
@@ -71,3 +72,31 @@ def getFirstRightValueByMark(matchString, mark):
 # 返回随机字符串
 def random_string_generator(str_size):
     return ''.join(random.choice('qwertyuiopasdfghjklzxcvbnm1234567890') for x in range(str_size))
+
+
+def is_contain_chinese(check_str):
+    """
+    判断字符串中是否包含中文
+    :param check_str: {str} 需要检测的字符串
+    :return: {bool} 包含返回True， 不包含返回False
+    """
+    for ch in check_str:
+        if u'\u4e00' <= ch <= u'\u9fff':
+            return True
+    return False
+
+"""
+ # 替换url参数的值
+"""
+def replaceUrlParam(param_old, dict_new):
+    dict_old = dict(urllib.parse.parse_qsl(param_old)) #将①的所有key值拿出来
+    for (key, value) in dict_old.items():#替换掉key值
+        if not key in dict_new:
+            continue
+        temp = dict_new[key]
+        dict_old[key] = temp
+    param_new = urllib.parse.urlencode(dict_old)#组合成新的url
+    return param_new
+
+def getUrlParam(param):
+    return dict(urllib.parse.parse_qsl(param))

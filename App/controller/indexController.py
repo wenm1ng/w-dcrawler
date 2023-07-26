@@ -12,6 +12,8 @@ from App.common.model.baseRedis import baseRedis
 from App.service.crawl.urlsChannels.ccAmazon2CrawlService import ccAmazonCrawlService
 from App.common.MysqlPool import MysqlPool
 from App.common.ossUpload import ossUpload
+from App.common.funs import is_contain_chinese
+import sys
 
 '''
  # 首页控制器
@@ -61,7 +63,9 @@ class indexController(object):
         # field = ['origin_title', 'origin_url', 'origin_description']
         # data = [{'origin_title': '采集测试1', 'origin_url': 'www.baidu.com', 'origin_description': '我是一个描述1'},{'origin_title': '采集测试1', 'origin_url': 'www.baidu.com', 'origin_description': '我是一个描述1'}]
         # row = MysqlPool().batch_insert(table, field, data)
-
+        strs = 'Luxthos - Hunter - Wrath of the Lich King'
+        print(is_contain_chinese(strs))
+        sys.exit()
         table = 'wow_wa_tab_title'
         field = '*'
         where = {'=': {'id': 2}}

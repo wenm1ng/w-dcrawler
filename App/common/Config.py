@@ -35,10 +35,10 @@
 # https://wago.io/tbc-weakauras tbc
 #
 # sl tbc classic
-wow_version = {'sl': 1, 'tbc': 2, 'classic': 3, 'wotlk': 4}
+wow_version = {'df': 1, 'tbc': 2, 'classic': 3, 'wotlk': 4}
 wow_occupation = {
     'cl2': 'sq', 'cl11': 'xd', 'cl12': 'dh', 'cl1': 'zs', 'cl9': 'ss', 'cl10': 'ws', 'cl6': 'dk', 'cl8': 'fs',
-    'cl4': 'dz', 'cl5': 'ms', 'cl3': 'lr', 'cl7': 'sm'
+    'cl4': 'dz', 'cl5': 'ms', 'cl3': 'lr', 'cl7': 'sm', 'cl13': 'ek'
 }
 wow_talent = {
     'cl2-1': '神圣', 'cl2-2': '防护', 'cl2-3': '惩戒', 'cl11-1': '平衡', 'cl11-2': '野性', 'cl11-3': '守护',
@@ -46,7 +46,8 @@ wow_talent = {
     'cl9-1': '痛苦', 'cl9-2': '恶魔学识', 'cl9-3': '毁灭', 'cl10-1': '酒仙', 'cl10-2': '织雾', 'cl10-3': '踏风',
     'cl6-1': '鲜血', 'cl6-2': '冰霜', 'cl6-3': '邪恶', 'cl8-1': '奥数', 'cl8-2': '火焰', 'cl8-3': '冰霜',
     'cl4-1': '奇袭', 'cl4-2': '狂徒', 'cl4-3': '敏锐', 'cl5-1': '戒律', 'cl5-2': '神圣', 'cl5-3': '暗影',
-    'cl3-1': '野兽控制', 'cl3-2': '射击', 'cl3-3': '生存', 'cl7-1': '元素', 'cl7-2': '增强', 'cl7-3': '恢复'
+    'cl3-1': '野兽控制', 'cl3-2': '射击', 'cl3-3': '生存', 'cl7-1': '元素', 'cl7-2': '增强', 'cl7-3': '恢复',
+    'cl13-1': '湮灭', 'cl13-2': '恩护', 'cl13-3': '增辉'
 }
 wow_tab = {
     'raidsepulcherfirst': {'type': 3, 'name': '初诞者圣墓'},
