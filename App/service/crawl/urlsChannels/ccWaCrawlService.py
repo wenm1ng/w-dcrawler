@@ -203,76 +203,84 @@ class ccWaCrawlService(object):
                     }
                     field = ['version', 'type', 'title']
                     ttId = MysqlPool().batch_insert('wow_wa_tab_title', field, insertData)
-            self.saveHtmlInfo(header,ttId,version,occupation,tabTitle,tabType)
+            self.saveHtmlInfo(header,ttId,version,occupation,tabTitle,tabType,module)
 
 
-    def saveHtmlInfo(self,header,ttId,version,occupation,tabTitle,tabType):
+    def saveHtmlInfo(self,header,ttId,version,occupation,tabTitle,tabType,module):
         try:
             #获取页数参数
             page = getUrlParam(header['TARGETURL'])['page']
-            result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,
-                                        timeout=5)
+            result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,timeout=5)
             sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
             # resStr = result.content(self=WebRequest).decode('utf-8')
             resArr = json.loads(result.content(self=WebRequest))
-            resArr['total'] / 25
+            pages = math.ceil(resArr['total'] / 25)
             time.sleep(max(0.3, round(random.random(), 2)))
-            for val in resArr['hits']:
-                if not is_contain_chinese(val['name']):
-                    continue
-                # 爬取wa详情页面信息
-                header['TARGETURL'] = 'https://data.wago.io/lookup/wago?id='+val['id']
-                header['User-Agent'] = userAgent().getPc()
+            for page in range(pages):
+                if page > 0:
+                    header['TARGETURL'] = replaceUrlParam(header['TARGETURL'], {'page': page})
+                    time.sleep(max(1, round(random.random(), 2)))
+                    result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,timeout=5)
+                    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
+                    # resStr = result.content(self=WebRequest).decode('utf-8')
+                    resArr = json.loads(result.content(self=WebRequest))
+                else:
+                    print(1)
+                for val in resArr['hits']:
+                    if not is_contain_chinese(val['name']):
+                        continue
+                    # 爬取wa详情页面信息
+                    header['TARGETURL'] = 'https://data.wago.io/lookup/wago?id='+val['id']
+                    header['User-Agent'] = userAgent().getPc()
 
-                result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,
-                                            timeout=5)
-                resArr = json.loads(result.content(self=WebRequest))
-                # Config.wow_talent.keys()
-                talentName = ''
-                for v in resArr['categories']:
-                    if module+'-' in v:
-                        talentName = Config.wow_talent[v]
+                    result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,timeout=5)
+                    resArr = json.loads(result.content(self=WebRequest))
+                    # Config.wow_talent.keys()
+                    talentName = ''
+                    for v in resArr['categories']:
+                        if module+'-' in v:
+                            talentName = Config.wow_talent[v]
 
-                insertData = {
-                    'version': version,
-                    'occupation': occupation,
-                    'talent_name': talentName,
-                    'type': tabType,
-                    'data_from': 2,
-                    'tt_id': ttId,
-                    'origin_url': resArr['url'],
-                    'origin_title': resArr['name'],
-                    'origin_description': resArr['description']['text']
-                }
-                # 爬取wa字符串信息
-                header['TARGETURL'] = 'https://data.wago.io'+resArr['codeURL']
-                header['User-Agent'] = userAgent().getPc()
-                result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,
-                                            timeout=5)
-                resInfoArr = json.loads(result.content(self=WebRequest))
-                insertData['wa_content'] = resInfoArr['encoded']
-                waData = [insertData]
-                field = ['version', 'occupation', 'talent_name', 'type', 'data_from', 'tt_id', 'origin_url', 'origin_title', 'origin_description', 'wa_content']
-                waId = MysqlPool().batch_insert('wow_wa_content_python', field, waData)
-                print(insertData)
+                    insertData = {
+                        'version': version,
+                        'occupation': occupation,
+                        'talent_name': talentName,
+                        'type': tabType,
+                        'data_from': 2,
+                        'tt_id': ttId,
+                        'origin_url': resArr['url'],
+                        'origin_id': val['id'],
+                        'origin_title': resArr['name'],
+                        'origin_description': resArr['description']['text']
+                    }
+                    # 爬取wa字符串信息
+                    header['TARGETURL'] = 'https://data.wago.io'+resArr['codeURL']
+                    header['User-Agent'] = userAgent().getPc()
+                    time.sleep(max(0.3, round(random.random(), 2)))
 
-                imageData = []
-                try:
-                    for image in resArr['screens']:
-                        if image['src']:
-                            # tempData = {'image_url': ossUpload().uploadImageQiNiu(image['src']), 'wa_id': waId}
-                            tempData = {'origin_image_url': image['src'], 'wa_id': waId}
-                            imageData.append(tempData)
-                except Exception as es:
-                    print('error file:' + es.__traceback__.tb_frame.f_globals["__file__"] + '_line:' + str(
-                        es.__traceback__.tb_lineno) + '_msg:' + str(es))  # 发生异常所在的文件
+                    result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,
+                                                timeout=5)
+                    resInfoArr = json.loads(result.content(self=WebRequest))
+                    insertData['wa_content'] = resInfoArr['encoded']
+                    waData = [insertData]
+                    field = ['version', 'occupation', 'talent_name', 'type', 'data_from', 'tt_id', 'origin_url', 'origin_id', 'origin_title', 'origin_description', 'wa_content']
+                    waId = MysqlPool().batch_insert('wow_wa_content_python', field, waData)
+                    print(insertData)
 
-                if imageData:
-                    field = ['origin_image_url', 'wa_id']
-                    MysqlPool().batch_insert('wow_wa_image_python', field, imageData)
-                time.sleep(max(0.3, round(random.random(), 2)))
-                print('成功采集id:'+val['id'])
-                sys.exit()
+                    imageData = []
+                    try:
+                        for image in resArr['screens']:
+                            if image['src']:
+                                # tempData = {'image_url': ossUpload().uploadImageQiNiu(image['src']), 'wa_id': waId}
+                                tempData = {'origin_image_url': image['src'], 'wa_id': waId}
+                                imageData.append(tempData)
+                    except Exception as es:
+                        print('error file:' + es.__traceback__.tb_frame.f_globals["__file__"] + '_line:' + str(es.__traceback__.tb_lineno) + '_msg:' + str(es))  # 发生异常所在的文件
+                    if imageData:
+                        field = ['origin_image_url', 'wa_id']
+                        MysqlPool().batch_insert('wow_wa_image_python', field, imageData)
+                    time.sleep(max(0.5, round(random.random(), 2)))
+                    print('成功采集id:'+val['id'])
             # startPos = resStr.find("'{")
             # endPos = resStr.find("'}")
             # jsonStr = resStr[startPos:endPos]

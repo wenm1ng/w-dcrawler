@@ -89,10 +89,11 @@ class WebRequest(object):
         # print(proxies)
         # while True:
         # try:
-        proxies = {
-            'http': 'http://120.77.46.4:6666',
-            'https': 'http://120.77.46.4:6666'
-        }
+#         proxies = {
+#             'http': 'http://120.77.46.4:6666',
+#             'https': 'http://120.77.46.4:6666'
+#         }
+        proxies = {}
         url = header['TARGETURL']
         self.response = requests.get(url, headers=header, proxies=proxies, timeout=timeout, *args, **kwargs)
         return self
@@ -110,9 +111,10 @@ class WebRequest(object):
         # print(url)
         # print(header)
 
-        # proxies = {
-        #     'http': 'http://127.0.0.1:33210',
-        # }
+        proxies = {
+            'http': 'http://127.0.0.1:33210',
+        }
+#         proxies = {}
         url = header['TARGETURL']
 
         if 'amazon' in url:
