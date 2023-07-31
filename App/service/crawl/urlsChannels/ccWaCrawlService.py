@@ -209,16 +209,17 @@ class ccWaCrawlService(object):
     def saveHtmlInfo(self,header,ttId,version,occupation,tabTitle,tabType,module):
         try:
             #获取页数参数
-            page = getUrlParam(header['TARGETURL'])['page']
+            # page = getUrlParam(header['TARGETURL'])['page']
             result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,timeout=5)
             sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
             # resStr = result.content(self=WebRequest).decode('utf-8')
+            listUrl = header['TARGETURL']
             resArr = json.loads(result.content(self=WebRequest))
             pages = math.ceil(resArr['total'] / 25)
             time.sleep(max(0.3, round(random.random(), 2)))
             for page in range(pages):
                 if page > 0:
-                    header['TARGETURL'] = replaceUrlParam(header['TARGETURL'], {'page': page})
+                    header['TARGETURL'] = replaceUrlParam(listUrl, {'page': page})
                     time.sleep(max(1, round(random.random(), 2)))
                     result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,timeout=5)
                     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
@@ -231,13 +232,12 @@ class ccWaCrawlService(object):
                         continue
                     # 爬取wa详情页面信息
                     header['TARGETURL'] = 'https://data.wago.io/lookup/wago?id='+val['id']
-                    header['User-Agent'] = userAgent().getPc()
 
                     result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,timeout=5)
-                    resArr = json.loads(result.content(self=WebRequest))
+                    lookUp = json.loads(result.content(self=WebRequest))
                     # Config.wow_talent.keys()
                     talentName = ''
-                    for v in resArr['categories']:
+                    for v in lookUp['categories']:
                         if module+'-' in v:
                             talentName = Config.wow_talent[v]
 
@@ -248,14 +248,14 @@ class ccWaCrawlService(object):
                         'type': tabType,
                         'data_from': 2,
                         'tt_id': ttId,
-                        'origin_url': resArr['url'],
+                        'origin_url': lookUp['url'],
                         'origin_id': val['id'],
-                        'origin_title': resArr['name'],
-                        'origin_description': resArr['description']['text']
+                        'origin_title': lookUp['name'],
+                        'origin_description': lookUp['description']['text']
                     }
                     # 爬取wa字符串信息
-                    header['TARGETURL'] = 'https://data.wago.io'+resArr['codeURL']
-                    header['User-Agent'] = userAgent().getPc()
+                    header['TARGETURL'] = 'https://data.wago.io'+lookUp['codeURL']
+                    print(header)
                     time.sleep(max(0.3, round(random.random(), 2)))
 
                     result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,
@@ -269,7 +269,7 @@ class ccWaCrawlService(object):
 
                     imageData = []
                     try:
-                        for image in resArr['screens']:
+                        for image in resInfoArr['screens']:
                             if image['src']:
                                 # tempData = {'image_url': ossUpload().uploadImageQiNiu(image['src']), 'wa_id': waId}
                                 tempData = {'origin_image_url': image['src'], 'wa_id': waId}
@@ -289,7 +289,7 @@ class ccWaCrawlService(object):
             # print(666, data)
             return
         except Exception as e:
-            print('error file:'+e.__traceback__.tb_frame.f_globals["__file__"]+'_line:'+str(e.__traceback__.tb_lineno)+'_msg:'+str(e))  # 发生异常所在的文件
+            # print('error file:'+e.__traceback__.tb_frame.f_globals["__file__"]+'_line:'+str(e.__traceback__.tb_lineno)+'_msg:'+str(e))  # 发生异常所在的文件
             raise AssertionError(e)
 
     """

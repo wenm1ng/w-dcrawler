@@ -119,7 +119,7 @@ class indexController(object):
             baseController().setApiResultData(True)
             baseController().setApiResultMsg('采集成功')
         except Exception as e:
-            print('error file:'+e.__traceback__.tb_frame.f_globals["__file__"]+'_line:'+str(e.__traceback__.tb_lineno)+'_msg:'+str(e))  # 发生异常所在的文件
+            # print('error file:'+e.__traceback__.tb_frame.f_globals["__file__"]+'_line:'+str(e.__traceback__.tb_lineno)+'_msg:'+str(e))  # 发生异常所在的文件
             baseController().setFailCode()
             baseController().setApiResultData(False)
             baseController().setApiResultMsg(str(e))

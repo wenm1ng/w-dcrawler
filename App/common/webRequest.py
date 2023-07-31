@@ -111,10 +111,10 @@ class WebRequest(object):
         # print(url)
         # print(header)
 
-        proxies = {
-            'http': 'http://127.0.0.1:33210',
-        }
-#         proxies = {}
+        # proxies = {
+        #     'http': 'http://127.0.0.1:33210',
+        # }
+        proxies = {}
         url = header['TARGETURL']
 
         if 'amazon' in url:
