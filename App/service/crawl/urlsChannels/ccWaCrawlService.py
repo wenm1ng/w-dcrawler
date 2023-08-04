@@ -208,6 +208,7 @@ class ccWaCrawlService(object):
 
     def saveHtmlInfo(self,header,ttId,version,occupation,tabTitle,tabType,module):
         try:
+
             #获取页数参数
             # page = getUrlParam(header['TARGETURL'])['page']
             result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,timeout=5)
@@ -240,11 +241,14 @@ class ccWaCrawlService(object):
                     for v in lookUp['categories']:
                         if module+'-' in v:
                             talentName = Config.wow_talent[v]
+                        if module in v:
+                            talentName = ','.join(Config.wow_talent_link['cl1'].values())
 
                     insertData = {
                         'version': version,
                         'occupation': occupation,
                         'talent_name': talentName,
+                        'tips': talentName,
                         'type': tabType,
                         'data_from': 2,
                         'tt_id': ttId,

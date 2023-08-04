@@ -95,7 +95,7 @@ def replaceUrlParam(param_old, dict_new):
             continue
         temp = dict_new[key]
         dict_old[key] = temp
-    param_new = urllib.parse.urlencode(dict_old)#组合成新的url
+    param_new = urllib.parse.unquote(urllib.parse.urlencode(dict_old))#组合成新的url
     return param_new
 
 def getUrlParam(param):
