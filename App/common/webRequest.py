@@ -117,22 +117,23 @@ class WebRequest(object):
         proxies = {}
         url = header['TARGETURL']
 
-        if 'amazon' in url:
-            requests.packages.urllib3.disable_warnings()
-            requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += ':HIGH:!DH:!aNULL'
-            try:
-                print(proxies)
-                requests.packages.urllib3.contrib.pyopenssl.util.ssl_.DEFAULT_CIPHERS += ':HIGH:!DH:!aNULL'
-            except AttributeError:
-                # no pyopenssl support used / needed / available
-                pass
+        # if 'amazon' in url:
+        #     requests.packages.urllib3.disable_warnings()
+        #     requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += ':HIGH:!DH:!aNULL'
+        #     try:
+        #         print(proxies)
+        #         requests.packages.urllib3.contrib.pyopenssl.util.ssl_.DEFAULT_CIPHERS += ':HIGH:!DH:!aNULL'
+        #     except AttributeError:
+        #         # no pyopenssl support used / needed / available
+        #         pass
         try:
             print(222222222)
             self.response = requests.get(url, headers=header, proxies=proxies, timeout=timeout, *args, **kwargs)
             return self
         except Exception as e:
-            print(e)
-            logService().info(msg='采集错误，url = ' + url + 'proxies = ' + str(proxies), fileName=self.__class__.__name__)
+            print(1111)
+            # print(e)
+            # logService().info(msg='采集错误，url = ' + url + 'proxies = ' + str(proxies), fileName=self.__class__.__name__)
             return False
 
     def easyAmazonGet(self, url, header=None, timeout=5, proxies=None, *args, **kwargs):

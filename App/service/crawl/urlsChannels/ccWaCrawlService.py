@@ -154,8 +154,10 @@ class ccWaCrawlService(object):
         #         return
 
         header = {}
-        print(777777777777777777777)
-        print(url)
+
+        # talentName = ','.join(Config.wow_talent_link['cl1-3'].values())
+        # print(talentName)
+        # sys.exit()
         # shopeurl = "https://{}/api/v2/item/get?itemid={}&shopid={}"
         for useType in '0':
             # needmd5 = "55b03-" + get_md5('55b03' + get_md5('itemid={}&shopid={}'.format(itemid, shopid)) + "55b03")
@@ -178,8 +180,11 @@ class ccWaCrawlService(object):
             occupation = ''
             tabTitle = ''
             tabType = 1
-
-            if module in Config.wow_occupation.keys():
+            changeMolule = module.split('-')
+            print(0 in changeMolule.keys())
+            if changeMolule[0] in locals() and changeMolule[0] in Config.wow_occupation.keys():
+                occupation = Config.wow_occupation[changeMolule[0]]
+            elif module in Config.wow_occupation.keys():
                 # 某个职业的专页
                 occupation = Config.wow_occupation[module]
             elif module in Config.wow_tab.keys():
@@ -212,7 +217,7 @@ class ccWaCrawlService(object):
             #获取页数参数
             # page = getUrlParam(header['TARGETURL'])['page']
             result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,timeout=5)
-            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
+            # sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
             # resStr = result.content(self=WebRequest).decode('utf-8')
             listUrl = header['TARGETURL']
             resArr = json.loads(result.content(self=WebRequest))
@@ -223,9 +228,12 @@ class ccWaCrawlService(object):
                     header['TARGETURL'] = replaceUrlParam(listUrl, {'page': page})
                     time.sleep(max(1, round(random.random(), 2)))
                     result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,timeout=5)
-                    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
+                    # print(3)
+                    # sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
+                    print(4)
                     # resStr = result.content(self=WebRequest).decode('utf-8')
                     resArr = json.loads(result.content(self=WebRequest))
+                    print(5)
                 else:
                     print(1)
                 for val in resArr['hits']:
@@ -233,17 +241,20 @@ class ccWaCrawlService(object):
                         continue
                     # 爬取wa详情页面信息
                     header['TARGETURL'] = 'https://data.wago.io/lookup/wago?id='+val['id']
-
+                    # print(val['id'])
+                    # sys.exit()
                     result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,timeout=5)
                     lookUp = json.loads(result.content(self=WebRequest))
                     # Config.wow_talent.keys()
                     talentName = ''
                     for v in lookUp['categories']:
                         if module+'-' in v:
-                            talentName = Config.wow_talent[v]
+                            talentName += Config.wow_talent[v]+','
                         if module in v:
-                            talentName = ','.join(Config.wow_talent_link['cl1'].values())
-
+                            talentName = ','.join(Config.wow_talent_link[v].values())
+                            break
+                    #去除右边的逗号
+                    talentName = talentName.rstrip(',')
                     insertData = {
                         'version': version,
                         'occupation': occupation,
@@ -293,7 +304,7 @@ class ccWaCrawlService(object):
             # print(666, data)
             return
         except Exception as e:
-            # print('error file:'+e.__traceback__.tb_frame.f_globals["__file__"]+'_line:'+str(e.__traceback__.tb_lineno)+'_msg:'+str(e))  # 发生异常所在的文件
+            print('error file:'+e.__traceback__.tb_frame.f_globals["__file__"]+'_line:'+str(e.__traceback__.tb_lineno)+'_msg:'+str(e))  # 发生异常所在的文件
             raise AssertionError(e)
 
     """
