@@ -166,12 +166,13 @@ class ccWaCrawlService(object):
             header['USETYPE'] = useType
             header['TARGETURL'] = url
             header['User-Agent'] = userAgent().getPc()
-            rs = re.match(r'.*?expansion:(.*?) type.*?tag:(.*?)&.*?', url)
+            rs = re.match(r'.*?expansion:(.*?) type.*?tag:(.*?)&.*?page=(.*?)&.*?', url)
             print(rs)
-            if not rs.group(1) or not rs.group(2):
+            if not rs.group(1) or not rs.group(2) or not rs.group(3):
                 raise Exception('采集链接错误')
             version = rs.group(1) #版本信息
             module = rs.group(2) #模块信息
+            originPage = rs.group(3)
             # 取数据类型
             if version not in Config.wow_version.keys():
                 raise Exception('版本信息错误')
@@ -181,8 +182,7 @@ class ccWaCrawlService(object):
             tabTitle = ''
             tabType = 1
             changeMolule = module.split('-')
-            print(0 in changeMolule.keys())
-            if changeMolule[0] in locals() and changeMolule[0] in Config.wow_occupation.keys():
+            if len(changeMolule) > 0 and changeMolule[0] in Config.wow_occupation.keys():
                 occupation = Config.wow_occupation[changeMolule[0]]
             elif module in Config.wow_occupation.keys():
                 # 某个职业的专页
@@ -208,10 +208,10 @@ class ccWaCrawlService(object):
                     }
                     field = ['version', 'type', 'title']
                     ttId = MysqlPool().batch_insert('wow_wa_tab_title', field, insertData)
-            self.saveHtmlInfo(header,ttId,version,occupation,tabTitle,tabType,module)
+            self.saveHtmlInfo(header,ttId,version,occupation,tabTitle,tabType,module,originPage)
 
 
-    def saveHtmlInfo(self,header,ttId,version,occupation,tabTitle,tabType,module):
+    def saveHtmlInfo(self,header,ttId,version,occupation,tabTitle,tabType,module,originPage):
         try:
 
             #获取页数参数
@@ -223,14 +223,21 @@ class ccWaCrawlService(object):
             resArr = json.loads(result.content(self=WebRequest))
             pages = math.ceil(resArr['total'] / 25)
             time.sleep(max(0.3, round(random.random(), 2)))
-            for page in range(pages):
+            for page in range(int(originPage), pages):
                 if page > 0:
                     header['TARGETURL'] = replaceUrlParam(listUrl, {'page': page})
                     time.sleep(max(1, round(random.random(), 2)))
                     result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,timeout=5)
                     # print(3)
                     # sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
-                    print(4)
+                    print('page:'+ str(page))
+                    if not result:
+                        time.sleep(120)
+                        result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl,
+                                                    header=header, timeout=5)
+                        if not result:
+                            print('请求被限制')
+                            break
                     # resStr = result.content(self=WebRequest).decode('utf-8')
                     resArr = json.loads(result.content(self=WebRequest))
                     print(5)
@@ -239,35 +246,52 @@ class ccWaCrawlService(object):
                 for val in resArr['hits']:
                     if not is_contain_chinese(val['name']):
                         continue
+                    #检测是否已经有此数据
+                    where = {'=': {'origin_id': val['id']}}
+                    info = MysqlPool().first('wow_wa_content_python', where, 'id')
+                    if info:
+                        continue
+                    print(val['id'])
                     # 爬取wa详情页面信息
                     header['TARGETURL'] = 'https://data.wago.io/lookup/wago?id='+val['id']
                     # print(val['id'])
                     # sys.exit()
                     result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,timeout=5)
+                    if not result:
+                        time.sleep(120)
+                        result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl,
+                                                    header=header, timeout=5)
+                        if not result:
+                            print('请求被限制1')
+                            raise Exception('请求被限制1')
                     lookUp = json.loads(result.content(self=WebRequest))
                     # Config.wow_talent.keys()
                     talentName = ''
                     for v in lookUp['categories']:
-                        if module+'-' in v:
+                        if module+'-' in v and v in Config.wow_talent:
                             talentName += Config.wow_talent[v]+','
-                        if module in v:
-                            talentName = ','.join(Config.wow_talent_link[v].values())
-                            break
+                        # if module in v:
+                        #     talentName = ','.join(Config.wow_talent_link[v].values())
+                        #     break
+                    if talentName == '':
+                        talentName = ','.join(Config.wow_talent_link[module].values())
                     #去除右边的逗号
                     talentName = talentName.rstrip(',')
                     insertData = {
                         'version': version,
                         'occupation': occupation,
-                        'talent_name': talentName,
                         'tips': talentName,
                         'type': tabType,
                         'data_from': 2,
                         'tt_id': ttId,
+                        'origin_user': '',
                         'origin_url': lookUp['url'],
                         'origin_id': val['id'],
                         'origin_title': lookUp['name'],
                         'origin_description': lookUp['description']['text']
                     }
+                    if 'name' in lookUp['user'].keys():
+                        insertData['origin_user'] = lookUp['user']['name']
                     # 爬取wa字符串信息
                     header['TARGETURL'] = 'https://data.wago.io'+lookUp['codeURL']
                     print(header)
@@ -275,16 +299,23 @@ class ccWaCrawlService(object):
 
                     result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl, header=header,
                                                 timeout=5)
+                    if not result:
+                        time.sleep(120)
+                        result = WebRequest.easyGet(self=WebRequest, url=defaultApp.szListingDynamicProxyUrl,
+                                                    header=header,
+                                                    timeout=5)
+                        if not result:
+                            print('请求被限制2')
+                            raise Exception('请求被限制2')
                     resInfoArr = json.loads(result.content(self=WebRequest))
                     insertData['wa_content'] = resInfoArr['encoded']
                     waData = [insertData]
-                    field = ['version', 'occupation', 'talent_name', 'type', 'data_from', 'tt_id', 'origin_url', 'origin_id', 'origin_title', 'origin_description', 'wa_content']
+                    field = ['version', 'occupation', 'origin_user', 'tips', 'type', 'data_from', 'tt_id', 'origin_url', 'origin_id', 'origin_title', 'origin_description', 'wa_content']
                     waId = MysqlPool().batch_insert('wow_wa_content_python', field, waData)
-                    print(insertData)
 
                     imageData = []
                     try:
-                        for image in resInfoArr['screens']:
+                        for image in lookUp['screens']:
                             if image['src']:
                                 # tempData = {'image_url': ossUpload().uploadImageQiNiu(image['src']), 'wa_id': waId}
                                 tempData = {'origin_image_url': image['src'], 'wa_id': waId}

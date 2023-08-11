@@ -131,9 +131,8 @@ class WebRequest(object):
             self.response = requests.get(url, headers=header, proxies=proxies, timeout=timeout, *args, **kwargs)
             return self
         except Exception as e:
-            print(1111)
-            # print(e)
-            # logService().info(msg='采集错误，url = ' + url + 'proxies = ' + str(proxies), fileName=self.__class__.__name__)
+            print(e)
+            logService().info(msg='采集错误，url = ' + url + 'proxies = ' + str(proxies), fileName=self.__class__.__name__)
             return False
 
     def easyAmazonGet(self, url, header=None, timeout=5, proxies=None, *args, **kwargs):
