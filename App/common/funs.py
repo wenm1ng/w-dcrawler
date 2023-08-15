@@ -8,6 +8,8 @@
 
 import random
 import urllib
+import time, urllib.parse
+from dateutil import parser
 
 def checkValueType(value):
     type = None
@@ -100,3 +102,14 @@ def replaceUrlParam(param_old, dict_new):
 
 def getUrlParam(param):
     return dict(urllib.parse.parse_qsl(param))
+
+#获取指定时间的时间戳
+def getTime(date):
+    dateStr = str(parser.parse(date))
+    return int(time.mktime(time.strptime(dateStr[0:19], '%Y-%m-%d %H:%M:%S')))
+
+#格式化日期
+#获取指定时间的时间戳
+def getDate(date):
+    dateStr = str(parser.parse(date))
+    return dateStr[0:19]

@@ -7,7 +7,6 @@
 
 import copy
 import re, os.path, time, urllib.parse
-
 import sys
 import io
 
@@ -36,7 +35,7 @@ import random
 from App.common import Config
 from App.common.Exception import msgException
 import sys
-from App.common.funs import is_contain_chinese,replaceUrlParam,getUrlParam
+from App.common.funs import is_contain_chinese,replaceUrlParam,getUrlParam,getTime,getDate
 import math
 
 '''
@@ -265,6 +264,7 @@ class ccWaCrawlService(object):
                             print('请求被限制1')
                             raise Exception('请求被限制1')
                     lookUp = json.loads(result.content(self=WebRequest))
+
                     # Config.wow_talent.keys()
                     talentName = ''
                     for v in lookUp['categories']:
@@ -288,7 +288,8 @@ class ccWaCrawlService(object):
                         'origin_url': lookUp['url'],
                         'origin_id': val['id'],
                         'origin_title': lookUp['name'],
-                        'origin_description': lookUp['description']['text']
+                        'origin_description': lookUp['description']['text'],
+                        'origin_date': getDate(lookUp['date']['modified'])
                     }
                     if 'name' in lookUp['user'].keys():
                         insertData['origin_user'] = lookUp['user']['name']
@@ -310,7 +311,7 @@ class ccWaCrawlService(object):
                     resInfoArr = json.loads(result.content(self=WebRequest))
                     insertData['wa_content'] = resInfoArr['encoded']
                     waData = [insertData]
-                    field = ['version', 'occupation', 'origin_user', 'tips', 'type', 'data_from', 'tt_id', 'origin_url', 'origin_id', 'origin_title', 'origin_description', 'wa_content']
+                    field = ['version', 'occupation', 'origin_user', 'tips', 'type', 'data_from', 'tt_id', 'origin_url', 'origin_id', 'origin_title', 'origin_description', 'origin_date', 'wa_content']
                     waId = MysqlPool().batch_insert('wow_wa_content_python', field, waData)
 
                     imageData = []
