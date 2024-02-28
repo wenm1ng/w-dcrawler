@@ -37,6 +37,14 @@ from App.common.Exception import msgException
 import sys
 from App.common.funs import is_contain_chinese,replaceUrlParam,getUrlParam,getTime,getDate
 import math
+from App.Lib.txTranslate.translateClient import translateClient
+from tencentcloud.common import credential
+from tencentcloud.common.profile.client_profile import ClientProfile
+from tencentcloud.common.profile.http_profile import HttpProfile
+from tencentcloud.tmt.v20180321 import tmt_client, models
+
+
+from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 
 '''
  # 66ip
@@ -165,12 +173,13 @@ class ccWaCrawlService(object):
             header['USETYPE'] = useType
             header['TARGETURL'] = url
             header['User-Agent'] = userAgent().getPc()
-            rs = re.match(r'.*?expansion:(.*?) type.*?tag:(.*?)&.*?page=(.*?)&.*?', url)
+            # rs = re.match(r'.*?expansion:(.*?) type.*?tag:(.*?)&.*?page=(.*?)&.*?', url)
+            rs = re.match(r'.*?tag:(.*?)&mode.*?expansion=(.*?)&page=(.*?)&.*?', url)
             print(rs)
             if not rs.group(1) or not rs.group(2) or not rs.group(3):
                 raise Exception('采集链接错误')
-            version = rs.group(1) #版本信息
-            module = rs.group(2) #模块信息
+            version = rs.group(2) #版本信息
+            module = rs.group(1) #模块信息
             originPage = rs.group(3)
             # 取数据类型
             if version not in Config.wow_version.keys():
@@ -209,6 +218,41 @@ class ccWaCrawlService(object):
                     ttId = MysqlPool().batch_insert('wow_wa_tab_title', field, insertData)
             self.saveHtmlInfo(header,ttId,version,occupation,tabTitle,tabType,module,originPage)
 
+    #腾讯翻译
+    def translate(self, originTranslateStr):
+
+        secret_id = defaultApp.APISecretId
+        secret_key = defaultApp.APISecretKey
+        # 初始化认证信息
+        cred = credential.Credential(secret_id, secret_key)
+
+        # 初始化http请求配置
+        http_profile = HttpProfile()
+        http_profile.endpoint = "tmt.tencentcloudapi.com"
+
+        # 初始化client profile
+        client_profile = ClientProfile()
+        client_profile.httpProfile = http_profile
+
+        # 创建客户端实例
+        client = tmt_client.TmtClient(cred, "ap-guangzhou", client_profile)
+
+        # 构造请求参数
+        request = models.TextTranslateRequest()
+        request.SourceText = originTranslateStr  # 需要翻译的原文
+        request.Source = "en"  # 源语言（例如："zh"代表中文）
+        request.Target = "zh"  # 目标语言（例如："en"代表英文）
+        request.ProjectId = 0
+
+        try:
+            response = client.TextTranslate(request)
+            translated_text = response.TargetText  # 翻译后的文本结果
+            print(111111)
+            print(response)
+            return translated_text
+        except Exception as err:
+            print(222222)
+            print(err)
 
     def saveHtmlInfo(self,header,ttId,version,occupation,tabTitle,tabType,module,originPage):
         try:
@@ -239,12 +283,14 @@ class ccWaCrawlService(object):
                             break
                     # resStr = result.content(self=WebRequest).decode('utf-8')
                     resArr = json.loads(result.content(self=WebRequest))
-                    print(5)
                 else:
                     print(1)
                 for val in resArr['hits']:
+                    isZh = 1
                     if not is_contain_chinese(val['name']):
-                        continue
+                        # continue
+                        #进行翻译
+                        isZh = 0
                     #检测是否已经有此数据
                     where = {'=': {'origin_id': val['id']}}
                     info = MysqlPool().first('wow_wa_content_python', where, 'id')
@@ -264,7 +310,11 @@ class ccWaCrawlService(object):
                             print('请求被限制1')
                             raise Exception('请求被限制1')
                     lookUp = json.loads(result.content(self=WebRequest))
-
+                    if(lookUp['favoriteCount'] == 0):
+                        break
+                    originDate = getDate(lookUp['date']['modified'])
+                    if(originDate < '2023-10-01 00:00:00'):
+                        continue
                     # Config.wow_talent.keys()
                     talentName = ''
                     for v in lookUp['categories']:
@@ -277,6 +327,16 @@ class ccWaCrawlService(object):
                         talentName = ','.join(Config.wow_talent_link[module].values())
                     #去除右边的逗号
                     talentName = talentName.rstrip(',')
+                    waNameOrigin = lookUp['name']
+                    descriptionOrigin = lookUp['description']['text']
+
+                    if(isZh == 0):
+                        waName = self.translate(lookUp['name'])
+                        description = self.translate(lookUp['description']['text'])
+                    else:
+                        waName = lookUp['name']
+                        description = lookUp['description']['text']
+
                     insertData = {
                         'version': version,
                         'occupation': occupation,
@@ -287,8 +347,10 @@ class ccWaCrawlService(object):
                         'origin_user': '',
                         'origin_url': lookUp['url'],
                         'origin_id': val['id'],
-                        'origin_title': lookUp['name'],
-                        'origin_description': lookUp['description']['text'],
+                        'origin_title': waNameOrigin,
+                        'origin_description': descriptionOrigin,
+                        'title': waName,
+                        'description': description,
                         'origin_date': getDate(lookUp['date']['modified'])
                     }
                     if 'name' in lookUp['user'].keys():
@@ -311,7 +373,7 @@ class ccWaCrawlService(object):
                     resInfoArr = json.loads(result.content(self=WebRequest))
                     insertData['wa_content'] = resInfoArr['encoded']
                     waData = [insertData]
-                    field = ['version', 'occupation', 'origin_user', 'tips', 'type', 'data_from', 'tt_id', 'origin_url', 'origin_id', 'origin_title', 'origin_description', 'origin_date', 'wa_content']
+                    field = ['version', 'occupation', 'origin_user', 'tips', 'type', 'data_from', 'tt_id', 'origin_url', 'origin_id', 'origin_title', 'origin_description', 'title', 'description', 'origin_date', 'wa_content']
                     waId = MysqlPool().batch_insert('wow_wa_content_python', field, waData)
 
                     imageData = []

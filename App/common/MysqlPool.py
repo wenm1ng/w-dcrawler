@@ -133,7 +133,7 @@ class MysqlPool(object):
                 row = tuple([item[field] for field in fields])
                 records.append(row)
             cursor.executemany(sql, records)
-            print(records)
+            # print(records)
             row = cursor.lastrowid
             conn.commit()
             return row
