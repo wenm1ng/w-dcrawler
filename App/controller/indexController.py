@@ -14,6 +14,7 @@ from App.common.MysqlPool import MysqlPool
 from App.common.ossUpload import ossUpload
 from App.common.funs import is_contain_chinese
 import sys
+from App.service.common.compressService import gif
 
 '''
  # 首页控制器
@@ -123,6 +124,18 @@ class indexController(object):
             baseController().setFailCode()
             baseController().setApiResultData(False)
             baseController().setApiResultMsg(str(e))
+        return baseController().outputJson()
+
+    @app.route("/api/compressGif", methods=['POST'])
+    def compressGif(self=''):
+        jsonParams = classContextService().getVarByName(name=baseController().__class__.__name__ + '_jsonParams')
+        for file in jsonParams['files']:
+            print(file)
+        result = gif(self)
+        print(result)
+        baseController().setSuccessCode()
+        baseController().setApiResultData(True)
+        baseController().setApiResultMsg('采集成功')
         return baseController().outputJson()
 
     """
