@@ -64,14 +64,22 @@ class indexController(object):
         # field = ['origin_title', 'origin_url', 'origin_description']
         # data = [{'origin_title': '采集测试1', 'origin_url': 'www.baidu.com', 'origin_description': '我是一个描述1'},{'origin_title': '采集测试1', 'origin_url': 'www.baidu.com', 'origin_description': '我是一个描述1'}]
         # row = MysqlPool().batch_insert(table, field, data)
-        strs = 'Luxthos - Hunter - Wrath of the Lich King'
-        print(is_contain_chinese(strs))
-        sys.exit()
+        # table = 'wow_skill'
+        # where = {'=': {'ws_id': 1}}
+        # updateData = {'precondition':'111'}
+        # rs = MysqlPool().update_data(table, updateData, where)
+        # print(rs)
+        # sys.exit()
+
+        # strs = 'Luxthos - Hunter - Wrath of the Lich King'
+        # print(is_contain_chinese(strs))
+        # sys.exit()
         table = 'wow_wa_tab_title'
         field = '*'
         where = {'=': {'id': 2}}
         row = MysqlPool().first(table, where, field)
-        print(row)
+
+        print(row['id'])
         # print(row)
         # time.sleep(2)
 

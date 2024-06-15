@@ -35,7 +35,7 @@
 # https://wago.io/tbc-weakauras tbc
 #
 # sl tbc classic
-wow_version = {'df': 1, 'tbc': 2, 'classic': 3, 'wotlk': 4}
+wow_version = {'df': 1, 'tbc': 2, 'classic': 3, 'wotlk': 4, 'cata': 5}
 wow_occupation = {
     'cl2': 'sq', 'cl11': 'xd', 'cl12': 'dh', 'cl1': 'zs', 'cl9': 'ss', 'cl10': 'ws', 'cl6': 'dk', 'cl8': 'fs',
     'cl4': 'dz', 'cl5': 'ms', 'cl3': 'lr', 'cl7': 'sm', 'cl13': 'ek'

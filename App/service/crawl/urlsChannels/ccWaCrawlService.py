@@ -294,9 +294,11 @@ class ccWaCrawlService(object):
                     #检测是否已经有此数据
                     where = {'=': {'origin_id': val['id']}}
                     info = MysqlPool().first('wow_wa_content_python', where, 'id')
-                    if info:
-                        continue
+
                     print(val['id'])
+                    # 如果没有星标，不要
+                    if(val['stars'] == 0):
+                        continue
                     # 爬取wa详情页面信息
                     header['TARGETURL'] = 'https://data.wago.io/lookup/wago?id='+val['id']
                     # print(val['id'])
@@ -313,7 +315,7 @@ class ccWaCrawlService(object):
                     if(lookUp['favoriteCount'] == 0):
                         break
                     originDate = getDate(lookUp['date']['modified'])
-                    if(originDate < '2023-10-01 00:00:00'):
+                    if(originDate < '2024-01-01 00:00:00'):
                         continue
                     # Config.wow_talent.keys()
                     talentName = ''
@@ -343,6 +345,7 @@ class ccWaCrawlService(object):
                         'tips': talentName,
                         'type': tabType,
                         'data_from': 2,
+                        'status': 0,
                         'tt_id': ttId,
                         'origin_user': '',
                         'origin_url': lookUp['url'],
@@ -372,24 +375,35 @@ class ccWaCrawlService(object):
                             raise Exception('请求被限制2')
                     resInfoArr = json.loads(result.content(self=WebRequest))
                     insertData['wa_content'] = resInfoArr['encoded']
-                    waData = [insertData]
-                    field = ['version', 'occupation', 'origin_user', 'tips', 'type', 'data_from', 'tt_id', 'origin_url', 'origin_id', 'origin_title', 'origin_description', 'title', 'description', 'origin_date', 'wa_content']
-                    waId = MysqlPool().batch_insert('wow_wa_content_python', field, waData)
+                    if info:
+                        where = {'=': {'ws_id': info['id']}}
+                        MysqlPool().update_data(table, insertData, where)
+                    else:
+                        waData = [insertData]
+                        field = ['version', 'occupation', 'origin_user', 'tips', 'type', 'data_from', 'tt_id',
+                                 'origin_url', 'origin_id', 'origin_title', 'origin_description', 'title',
+                                 'description', 'origin_date', 'wa_content']
+                        waId = MysqlPool().batch_insert('wow_wa_content_python', field, waData)
 
-                    imageData = []
-                    try:
-                        for image in lookUp['screens']:
-                            if image['src']:
-                                # tempData = {'image_url': ossUpload().uploadImageQiNiu(image['src']), 'wa_id': waId}
-                                tempData = {'origin_image_url': image['src'], 'wa_id': waId}
-                                imageData.append(tempData)
-                    except Exception as es:
-                        print('error file:' + es.__traceback__.tb_frame.f_globals["__file__"] + '_line:' + str(es.__traceback__.tb_lineno) + '_msg:' + str(es))  # 发生异常所在的文件
-                    if imageData:
-                        field = ['origin_image_url', 'wa_id']
-                        MysqlPool().batch_insert('wow_wa_image_python', field, imageData)
+                        imageData = []
+                        try:
+                            for image in lookUp['screens']:
+                                if image['src']:
+                                    # tempData = {'image_url': ossUpload().uploadImageQiNiu(image['src']), 'wa_id': waId}
+                                    tempData = {'origin_image_url': image['src'], 'wa_id': waId}
+                                    imageData.append(tempData)
+                        except Exception as es:
+                            print('error file:' + es.__traceback__.tb_frame.f_globals["__file__"] + '_line:' + str(
+                                es.__traceback__.tb_lineno) + '_msg:' + str(es))  # 发生异常所在的文件
+                        if imageData:
+                            field = ['origin_image_url', 'wa_id']
+                            MysqlPool().batch_insert('wow_wa_image_python', field, imageData)
+
                     time.sleep(max(0.5, round(random.random(), 2)))
                     print('成功采集id:'+val['id'])
+
+                    if info:
+                        print('编辑wa成功')
             # startPos = resStr.find("'{")
             # endPos = resStr.find("'}")
             # jsonStr = resStr[startPos:endPos]

@@ -61,7 +61,7 @@ class MysqlPool(object):
         self.connect_close(conn, cursor)
         return row
 
-    def getWhere(self, where):
+    def getWhere1(self, where):
         whereArr = []
         args = []
 
@@ -79,6 +79,23 @@ class MysqlPool(object):
                 whereArr.append(key + ' in %s')
                 args.append(keyStr)
         whereStr = ' and '.join(whereArr)
+        return {'where': whereStr, 'args': args}
+
+    def getWhere(self, where):
+        whereArr = []
+        args = []
+
+        if '=' in where:
+            for key, value in where['='].items():
+                whereArr.append(f"{key} = %s")
+                args.append(value)
+        if 'in' in where:
+            for key, values_list in where['in'].items():
+                placeholder = ', '.join(['%s'] * len(values_list))
+                whereArr.append(f"{key} IN ({placeholder})")
+                args.extend(values_list)  # 注意这里是extend，因为values_list可能是多个值
+
+        whereStr = ' AND '.join(whereArr)
         return {'where': whereStr, 'args': args}
 
     def get(self, table, where, fields):
@@ -142,3 +159,41 @@ class MysqlPool(object):
                 e.__traceback__.tb_lineno) + '_msg:' + str(e))  # 发生异常所在的文件
             conn.rollback()
             raise AssertionError(e)
+
+    # 执行UPDATE操作
+    def update_data(self, table, fields_values, where_conditions):
+        conn, cursor = self.connect()
+
+        try:
+            # 使用getWhere方法处理条件
+            where_data = self.getWhere(where_conditions)
+            where_clause = where_data['where']
+            args = list(fields_values.values()) + where_data['args']
+
+            # 构建更新字段的字符串
+            set_clause = ','.join([f"{field}=%s" for field in fields_values.keys()])
+
+            # 组合完整的SQL语句
+            sql_template = '''
+            UPDATE {table} 
+            SET {set_clause} 
+            WHERE {where_clause}
+            '''.format(table=table,set_clause=set_clause,where_clause=where_clause)
+            print(sql_template, args)
+            # 执行更新操作
+            cursor.execute(sql_template, args)
+
+            affected_rows = cursor.rowcount
+
+            conn.commit()
+            return affected_rows
+
+        except Exception as e:
+            print(
+                f'Error in file: {e.__traceback__.tb_frame.f_globals["__file__"]} line: {e.__traceback__.tb_lineno} message: {e}')
+            conn.rollback()
+            raise
+
+        finally:
+            cursor.close()
+            conn.close()
