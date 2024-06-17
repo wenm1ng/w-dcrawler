@@ -175,12 +175,12 @@ class ccWaCrawlService(object):
             header['User-Agent'] = userAgent().getPc()
             # rs = re.match(r'.*?expansion:(.*?) type.*?tag:(.*?)&.*?page=(.*?)&.*?', url)
             rs = re.match(r'.*?tag:(.*?)&mode.*?expansion=(.*?)&page=(.*?)&.*?', url)
-            print(rs)
             if not rs.group(1) or not rs.group(2) or not rs.group(3):
                 raise Exception('采集链接错误')
             version = rs.group(2) #版本信息
             module = rs.group(1) #模块信息
             originPage = rs.group(3)
+
             # 取数据类型
             if version not in Config.wow_version.keys():
                 raise Exception('版本信息错误')
@@ -244,7 +244,14 @@ class ccWaCrawlService(object):
         request.Target = "zh"  # 目标语言（例如："en"代表英文）
         request.ProjectId = 0
 
+        detectRequest = models.LanguageDetectRequest()
+        detectRequest.Text = originTranslateStr
+        detectRequest.ProjectId = 0
         try:
+            detectResponse = client.LanguageDetect(detectRequest)
+            if detectResponse.Lang:
+                request.Source = detectResponse.Lang  # 源语言
+
             response = client.TextTranslate(request)
             translated_text = response.TargetText  # 翻译后的文本结果
             print(111111)
@@ -354,6 +361,7 @@ class ccWaCrawlService(object):
                         'origin_description': descriptionOrigin,
                         'title': waName,
                         'description': description,
+                        'stars': val['stars'],
                         'origin_date': getDate(lookUp['date']['modified'])
                     }
                     if 'name' in lookUp['user'].keys():
@@ -376,13 +384,13 @@ class ccWaCrawlService(object):
                     resInfoArr = json.loads(result.content(self=WebRequest))
                     insertData['wa_content'] = resInfoArr['encoded']
                     if info:
-                        where = {'=': {'ws_id': info['id']}}
-                        MysqlPool().update_data(table, insertData, where)
+                        where = {'=': {'origin_id': val['id']}}
+                        MysqlPool().update_data('wow_wa_content_python', insertData, where)
                     else:
                         waData = [insertData]
                         field = ['version', 'occupation', 'origin_user', 'tips', 'type', 'data_from', 'tt_id',
                                  'origin_url', 'origin_id', 'origin_title', 'origin_description', 'title',
-                                 'description', 'origin_date', 'wa_content']
+                                 'description', 'stars', 'origin_date', 'wa_content']
                         waId = MysqlPool().batch_insert('wow_wa_content_python', field, waData)
 
                         imageData = []

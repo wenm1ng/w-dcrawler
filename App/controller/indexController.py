@@ -10,6 +10,7 @@ from App.common.webRequest import WebRequest
 from App.service.system.classContextService import classContextService
 from App.common.model.baseRedis import baseRedis
 from App.service.crawl.urlsChannels.ccAmazon2CrawlService import ccAmazonCrawlService
+from App.service.crawl.urlsChannels.ccWaCrawlService import ccWaCrawlService
 from App.common.MysqlPool import MysqlPool
 from App.common.ossUpload import ossUpload
 from App.common.funs import is_contain_chinese
@@ -74,6 +75,8 @@ class indexController(object):
         # strs = 'Luxthos - Hunter - Wrath of the Lich King'
         # print(is_contain_chinese(strs))
         # sys.exit()
+        ccWaCrawlService.translate(self, 'Эмайти: Паладин 1440p')
+        sys.exit()
         table = 'wow_wa_tab_title'
         field = '*'
         where = {'=': {'id': 2}}
