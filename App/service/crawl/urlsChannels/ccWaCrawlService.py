@@ -175,8 +175,11 @@ class ccWaCrawlService(object):
             header['User-Agent'] = userAgent().getPc()
             # rs = re.match(r'.*?expansion:(.*?) type.*?tag:(.*?)&.*?page=(.*?)&.*?', url)
             rs = re.match(r'.*?tag:(.*?)&mode.*?expansion=(.*?)&page=(.*?)&.*?', url)
-            if not rs.group(1) or not rs.group(2) or not rs.group(3):
-                raise Exception('采集链接错误')
+
+            if not rs or rs.group(1) or not rs.group(2) or not rs.group(3):
+                rs = re.match(r'.*?category:(.*?)&mode.*?expansion=(.*?)&type.*?&page=(.*?)&.*?', url)
+                if not rs.group(1) or not rs.group(2) or not rs.group(3):
+                    raise Exception('采集链接错误')
             version = rs.group(2) #版本信息
             module = rs.group(1) #模块信息
             originPage = rs.group(3)
@@ -201,7 +204,9 @@ class ccWaCrawlService(object):
 
             if not (occupation or (tabTitle and tabType)):
                 raise Exception('tab信息错误')
-
+            print(version)
+            print(tabType)
+            print(tabTitle)
             ttId = 0
             if tabTitle:
                 # 查询是否已有tab数据
@@ -209,11 +214,11 @@ class ccWaCrawlService(object):
                 info = MysqlPool().first('wow_wa_tab_title', where)
                 if not info:
                     # 添加到tab_title表
-                    insertData = {
+                    insertData = [{
                         'version': version,
                         'type': tabType,
                         'title': tabTitle
-                    }
+                    }]
                     field = ['version', 'type', 'title']
                     ttId = MysqlPool().batch_insert('wow_wa_tab_title', field, insertData)
             self.saveHtmlInfo(header,ttId,version,occupation,tabTitle,tabType,module,originPage)
@@ -319,23 +324,26 @@ class ccWaCrawlService(object):
                             print('请求被限制1')
                             raise Exception('请求被限制1')
                     lookUp = json.loads(result.content(self=WebRequest))
-                    if(lookUp['favoriteCount'] == 0):
-                        break
+                    # if(lookUp['favoriteCount'] == 0):
+                    #     break
                     originDate = getDate(lookUp['date']['modified'])
-                    if(originDate < '2024-01-01 00:00:00'):
-                        continue
+                    # if(originDate < '2024-01-01 00:00:00'):
+                    #     continue
                     # Config.wow_talent.keys()
-                    talentName = ''
-                    for v in lookUp['categories']:
-                        if module+'-' in v and v in Config.wow_talent:
-                            talentName += Config.wow_talent[v]+','
-                        # if module in v:
-                        #     talentName = ','.join(Config.wow_talent_link[v].values())
-                        #     break
-                    if talentName == '':
-                        talentName = ','.join(Config.wow_talent_link[module].values())
-                    #去除右边的逗号
-                    talentName = talentName.rstrip(',')
+                    if tabTitle:
+                        talentName = tabTitle
+                    else:
+                        talentName = ''
+                        for v in lookUp['categories']:
+                            if module+'-' in v and v in Config.wow_talent:
+                                talentName += Config.wow_talent[v]+','
+                            # if module in v:
+                            #     talentName = ','.join(Config.wow_talent_link[v].values())
+                            #     break
+                        if talentName == '':
+                            talentName = ','.join(Config.wow_talent_link[module].values())
+                        #去除右边的逗号
+                        talentName = talentName.rstrip(',')
                     waNameOrigin = lookUp['name']
                     descriptionOrigin = lookUp['description']['text']
 

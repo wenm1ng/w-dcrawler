@@ -68,6 +68,7 @@ wow_tab = {
     'raidsepulcherfirst': {'type': 3, 'name': '初诞者圣墓'},
     'sldungeon': {'type': 2, 'name': '暗影界五人本'},
     'sltimewalking': {'type': 2, 'name': '时光副本'},
+    'raidulduar': {'type': 2, 'name': '奥杜尔'},
     'pvp': {'type': 2, 'name': 'pvp'},
     'role0': {'type': 1, 'name': '角色职业'},
     'mech': {'type': 3, 'name': '战斗机制'},
